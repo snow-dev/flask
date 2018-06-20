@@ -181,3 +181,97 @@ Para comenzar intalemos un paquete:
 
 listo, ahora podemos comenzar a picar código.
 
+## Crear y editar nuestra 'micro' api
+
+Vamos a crear un archivo y veremos la mágia:
+
+```bash
+(env)$ touch api.py
+nano api.py
+```
+
+y una ves abierto, ponemos lo siguiente:
+
+```python
+from flask import Flask
+from flask_restful import Resource, Api
+
+app = Flask(__name__)
+api = Api(app)
+
+class HelloWorld(Resource):
+    def get(self):
+        return {'hello': 'world'}
+
+api.add_resource(HelloWorld, '/')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+en la terminal escribimos:
+
+```bash
+(env)$ python api.py
+ * Serving Flask app "flask_api" (lazy loading)
+ * Environment: production
+   WARNING: Do not use the development server in a 	    production environment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 296-244-823
+```
+
+Si abrimos esa direccion en un navegador moderno (no IE6 ejem...), podemos ver la respuesta, o si estamos un todopoderos like _UNIX_:
+
+```bash
+$curl http//127.0.0.1/5000/
+{
+    "hello": "world"
+}
+```
+
+y como suelo decir, mi trabajo aquí esta hecho.
+
+## ... y ¿cómo funciona esta cosa maravillosa?
+
+Flask nos prove como bloque de construcción los _resources_. Los resources estan en la parte mas alta de [Flask pluggable views](http://flask.pocoo.org/docs/1.0/views/), esto nos da un fácil accesso a distintos metodos HTTP solamente definiendolos en los resources.
+
+Como no puede ser de otra forma, vamos a contruir la vieja confiable, el hola mundo de las RESTFul-API, un fabuloso **todo** (yeeei, grito de colegiala).
+
+Para ello vamos a hacer algunas modificaciones a nuestra _api.py_:
+
+```python
+from flask import Flask, request
+from flask_restful import Resource, Api
+
+app = Flask(__name__)
+api = Api(app)
+
+todos = {}
+
+class TodoSimple(Resource):
+    def get(self, todo_id):
+        return {todo_id: todos[todo_id]}
+
+    def put(self, todo_id):
+        todos[todo_id] = request.form['data']
+        return {todo_id: todos[todo_id]}
+
+api.add_resource(TodoSimple, '/<string:todo_id>')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+y listo, volvemos a ejecutar nuestra api en el servidor de debug y en la tarminal ponemos lo siguiente:
+
+```bash
+$ curl http://localhost:5000/todo1 -d "data=Remember the milk" -X PUT
+{
+    "todo1": "Remember the milk"
+}
+```
+
